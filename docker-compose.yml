@@ -1,0 +1,14 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      #POSTGRES_USER: www
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: todo
+    ports:
+      - "127.0.0.1:5431:15434"
+
