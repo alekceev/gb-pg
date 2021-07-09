@@ -1,0 +1,81 @@
+-- Физически Занимаемое место
+
+$ docker exec  -ti gb-pg_db_1 bash
+root@775c9784acbb:/todo# du -hs $PGDATA
+48M	/var/lib/postgresql/data
+root@775c9784acbb:/todo# 
+root@775c9784acbb:/todo# du -hs $PGDATA/*
+31M	/var/lib/postgresql/data/base
+568K	/var/lib/postgresql/data/global
+4.0K	/var/lib/postgresql/data/pg_commit_ts
+4.0K	/var/lib/postgresql/data/pg_dynshmem
+8.0K	/var/lib/postgresql/data/pg_hba.conf
+4.0K	/var/lib/postgresql/data/pg_ident.conf
+16K	/var/lib/postgresql/data/pg_logical
+28K	/var/lib/postgresql/data/pg_multixact
+4.0K	/var/lib/postgresql/data/pg_notify
+4.0K	/var/lib/postgresql/data/pg_replslot
+4.0K	/var/lib/postgresql/data/pg_serial
+4.0K	/var/lib/postgresql/data/pg_snapshots
+4.0K	/var/lib/postgresql/data/pg_stat
+40K	/var/lib/postgresql/data/pg_stat_tmp
+12K	/var/lib/postgresql/data/pg_subtrans
+4.0K	/var/lib/postgresql/data/pg_tblspc
+4.0K	/var/lib/postgresql/data/pg_twophase
+4.0K	/var/lib/postgresql/data/PG_VERSION
+17M	/var/lib/postgresql/data/pg_wal
+12K	/var/lib/postgresql/data/pg_xact
+4.0K	/var/lib/postgresql/data/postgresql.auto.conf
+28K	/var/lib/postgresql/data/postgresql.conf
+4.0K	/var/lib/postgresql/data/postmaster.opts
+4.0K	/var/lib/postgresql/data/postmaster.pid
+
+-- Занимаемое место
+todo=# \d+
+                                  List of relations
+ Schema |     Name     |   Type   |  Owner   | Persistence |    Size    | Description 
+--------+--------------+----------+----------+-------------+------------+-------------
+ public | items        | table    | postgres | permanent   | 16 kB      | 
+ public | items_id_seq | sequence | postgres | permanent   | 8192 bytes | 
+ public | lists        | table    | postgres | permanent   | 16 kB      | 
+ public | lists_id_seq | sequence | postgres | permanent   | 8192 bytes | 
+ public | users        | table    | postgres | permanent   | 8192 bytes | 
+ public | users_lists  | table    | postgres | permanent   | 8192 bytes | 
+(6 rows)
+
+-- Занимаемое место
+
+todo=# select oid::regclass::text as tablename, round(pg_total_relation_size(oid)/1024, 2) as Kb from pg_class where relkind = 'r' order by Kb desc limit 5;
+   tablename    |   kb    
+----------------+---------
+ pg_depend      | 1120.00
+ pg_proc        | 1024.00
+ pg_attribute   |  696.00
+ pg_rewrite     |  688.00
+ pg_description |  560.00
+(5 rows)
+
+
+-- Кол-во элементов в таблицах
+
+todo=# select relname, reltuples::bigint as estimate from pg_class where oid in ('public.users'::regclass, 'public.lists'::regclass, 'public.items'::regclass, 'public.users_lists'::regclass);
+   relname   | estimate 
+-------------+----------
+ lists       |        0
+ users       |        0
+ users_lists |        0
+ items       |        0
+(4 rows)
+
+
+todo=# select count(1) from items;
+ count 
+-------
+     9
+(1 row)
+
+todo=# select count(1) from lists;;
+ count 
+-------
+     2
+(1 row)
