@@ -1,0 +1,125 @@
+explain analyze with list as (
+    select list_id from users_lists
+    where user_uuid in (select uuid from users where email = 'user1@mail.ru')
+)
+select i.*, l.title from lists l join items i on l.id = i.list_id
+where l.id in (select list_id from list);
+                                                                               QUERY PLAN                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=20.10..9400.29 rows=1 width=791) (actual time=0.063..29.021 rows=119 loops=1)
+   ->  Hash Join  (cost=19.81..9399.96 rows=1 width=537) (actual time=0.057..28.840 rows=119 loops=1)
+         Hash Cond: (i.list_id = users_lists.list_id)
+         ->  Seq Scan on items i  (cost=0.00..8967.19 rows=110119 width=533) (actual time=0.004..11.199 rows=110119 loops=1)
+         ->  Hash  (cost=19.80..19.80 rows=1 width=4) (actual time=0.038..0.045 rows=8 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+               ->  HashAggregate  (cost=19.79..19.80 rows=1 width=4) (actual time=0.034..0.040 rows=8 loops=1)
+                     Group Key: users_lists.list_id
+                     Batches: 1  Memory Usage: 24kB
+                     ->  Nested Loop  (cost=4.71..19.79 rows=1 width=4) (actual time=0.026..0.031 rows=8 loops=1)
+                           ->  Index Scan using users_email_key on users  (cost=0.41..8.43 rows=1 width=16) (actual time=0.014..0.015 rows=1 loops=1)
+                                 Index Cond: ((email)::text = 'user1@mail.ru'::text)
+                           ->  Bitmap Heap Scan on users_lists  (cost=4.30..11.34 rows=2 width=20) (actual time=0.010..0.012 rows=8 loops=1)
+                                 Recheck Cond: (user_uuid = users.uuid)
+                                 Heap Blocks: exact=1
+                                 ->  Bitmap Index Scan on users_lists_user_uuid_list_id_key  (cost=0.00..4.30 rows=2 width=0) (actual time=0.005..0.005 rows=8 loops=1)
+                                       Index Cond: (user_uuid = users.uuid)
+   ->  Index Scan using lists_id_key on lists l  (cost=0.29..0.33 rows=1 width=262) (actual time=0.001..0.001 rows=1 loops=119)
+         Index Cond: (id = i.list_id)
+ Planning Time: 0.533 ms
+ Execution Time: 29.106 ms
+(21 rows)
+
+
+todo=# explain analyze with l as (
+todo(#     select * from lists l
+todo(#     join users_lists u on u.list_id = l.id 
+todo(#     where u.user_uuid = (select uuid from users where email = 'user1@mail.ru' limit 1)
+todo(# )
+todo-# select i.*, l.title from l join items i on l.id = i.list_id;
+                                                                         QUERY PLAN                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=20.08..9276.74 rows=2 width=791) (actual time=0.328..31.110 rows=119 loops=1)
+   Join Filter: (u.list_id = l.id)
+   InitPlan 1 (returns $0)
+     ->  Limit  (cost=0.41..8.43 rows=1 width=16) (actual time=0.083..0.085 rows=1 loops=1)
+           ->  Index Scan using users_email_key on users  (cost=0.41..8.43 rows=1 width=16) (actual time=0.079..0.079 rows=1 loops=1)
+                 Index Cond: ((email)::text = 'user1@mail.ru'::text)
+   ->  Hash Join  (cost=11.36..9267.63 rows=2 width=537) (actual time=0.245..30.321 rows=119 loops=1)
+         Hash Cond: (i.list_id = u.list_id)
+         ->  Seq Scan on items i  (cost=0.00..8967.19 rows=110119 width=533) (actual time=0.025..12.436 rows=110119 loops=1)
+         ->  Hash  (cost=11.34..11.34 rows=2 width=4) (actual time=0.183..0.184 rows=8 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+               ->  Bitmap Heap Scan on users_lists u  (cost=4.30..11.34 rows=2 width=4) (actual time=0.149..0.162 rows=8 loops=1)
+                     Recheck Cond: (user_uuid = $0)
+                     Heap Blocks: exact=1
+                     ->  Bitmap Index Scan on users_lists_user_uuid_list_id_key  (cost=0.00..4.30 rows=2 width=0) (actual time=0.127..0.127 rows=8 loops=1)
+                           Index Cond: (user_uuid = $0)
+   ->  Index Scan using lists_id_key on lists l  (cost=0.29..0.33 rows=1 width=262) (actual time=0.005..0.005 rows=1 loops=119)
+         Index Cond: (id = i.list_id)
+ Planning Time: 3.080 ms
+ Execution Time: 31.374 ms
+(20 rows)
+
+
+todo=# explain analyze with list as (
+    select list_id from users_lists
+    where user_uuid in (select uuid from users where email like '%@mail.ru')
+)
+select i.*, l.title from lists l join items i on l.id = i.list_id
+where l.id in (select list_id from list);
+                                                                               QUERY PLAN                                                                               
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=592.83..9973.02 rows=1 width=791) (actual time=6.376..30.794 rows=119 loops=1)
+   ->  Hash Join  (cost=592.55..9972.69 rows=1 width=537) (actual time=6.366..30.601 rows=120 loops=1)
+         Hash Cond: (i.list_id = users_lists.list_id)
+         ->  Seq Scan on items i  (cost=0.00..8967.19 rows=110119 width=533) (actual time=0.012..9.172 rows=110119 loops=1)
+         ->  Hash  (cost=592.53..592.53 rows=1 width=4) (actual time=6.330..6.333 rows=20 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+               ->  HashAggregate  (cost=592.52..592.53 rows=1 width=4) (actual time=6.319..6.324 rows=20 loops=1)
+                     Group Key: users_lists.list_id
+                     Batches: 1  Memory Usage: 24kB
+                     ->  Nested Loop  (cost=4.30..592.52 rows=1 width=4) (actual time=0.071..6.279 rows=20 loops=1)
+                           ->  Seq Scan on users  (cost=0.00..581.16 rows=1 width=16) (actual time=0.011..5.942 rows=3 loops=1)
+                                 Filter: ((email)::text ~~ '%@mail.ru'::text)
+                                 Rows Removed by Filter: 10010
+                           ->  Bitmap Heap Scan on users_lists  (cost=4.30..11.34 rows=2 width=20) (actual time=0.094..0.102 rows=7 loops=3)
+                                 Recheck Cond: (user_uuid = users.uuid)
+                                 Heap Blocks: exact=6
+                                 ->  Bitmap Index Scan on users_lists_user_uuid_list_id_key  (cost=0.00..4.30 rows=2 width=0) (actual time=0.080..0.080 rows=7 loops=3)
+                                       Index Cond: (user_uuid = users.uuid)
+   ->  Index Scan using lists_id_key on lists l  (cost=0.29..0.33 rows=1 width=262) (actual time=0.001..0.001 rows=1 loops=120)
+         Index Cond: (id = i.list_id)
+ Planning Time: 1.612 ms
+ Execution Time: 30.947 ms
+(22 rows)
+
+
+todo=# explain analyze with l as (
+    select * from lists l
+    join users_lists u on u.list_id = l.id 
+    where u.user_uuid = (select uuid from users where email like '%@mail.ru' limit 1)
+)
+select i.*, l.title from l join items i on l.id = i.list_id;
+                                                                         QUERY PLAN                                                                         
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop  (cost=592.81..9849.47 rows=2 width=791) (actual time=0.225..58.794 rows=119 loops=1)
+   Join Filter: (u.list_id = l.id)
+   InitPlan 1 (returns $0)
+     ->  Limit  (cost=0.00..581.16 rows=1 width=16) (actual time=0.021..0.023 rows=1 loops=1)
+           ->  Seq Scan on users  (cost=0.00..581.16 rows=1 width=16) (actual time=0.018..0.018 rows=1 loops=1)
+                 Filter: ((email)::text ~~ '%@mail.ru'::text)
+   ->  Hash Join  (cost=11.36..9267.63 rows=2 width=537) (actual time=0.183..57.627 rows=119 loops=1)
+         Hash Cond: (i.list_id = u.list_id)
+         ->  Seq Scan on items i  (cost=0.00..8967.19 rows=110119 width=533) (actual time=0.019..25.013 rows=110119 loops=1)
+         ->  Hash  (cost=11.34..11.34 rows=2 width=4) (actual time=0.136..0.139 rows=8 loops=1)
+               Buckets: 1024  Batches: 1  Memory Usage: 9kB
+               ->  Bitmap Heap Scan on users_lists u  (cost=4.30..11.34 rows=2 width=4) (actual time=0.078..0.086 rows=8 loops=1)
+                     Recheck Cond: (user_uuid = $0)
+                     Heap Blocks: exact=1
+                     ->  Bitmap Index Scan on users_lists_user_uuid_list_id_key  (cost=0.00..4.30 rows=2 width=0) (actual time=0.059..0.060 rows=8 loops=1)
+                           Index Cond: (user_uuid = $0)
+   ->  Index Scan using lists_id_key on lists l  (cost=0.29..0.33 rows=1 width=262) (actual time=0.007..0.007 rows=1 loops=119)
+         Index Cond: (id = i.list_id)
+ Planning Time: 2.458 ms
+ Execution Time: 58.987 ms
+(20 rows)

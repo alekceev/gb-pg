@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: todo
     ports:
-      - "127.0.0.1:5431:15434"
+      - "127.0.0.1:15434:5432"
     volumes:
       - .:/todo
       - ./.database/postgres/data:/var/lib/postgresql/data
