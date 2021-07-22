@@ -34,9 +34,9 @@ func (s *PG) Search(ctx context.Context, prefix string, limit int) ([]EmailSearc
 select
 	u.email,
 	u.name,
-	count(ul.list_id) as cnt
-from users_lists ul
-join users u on ul.user_uuid = u.uuid
+	count(l.id) as cnt
+from lists l
+join users u on l.user_uuid = u.uuid
 where u.email like $1
 group by u.email, u.name
 order by cnt desc

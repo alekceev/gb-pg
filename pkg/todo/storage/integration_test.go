@@ -38,8 +38,7 @@ func TestIntegrationSearch(t *testing.T) {
 				dbpool.Exec(context.Background(), `insert into users (name, email, pass, salt) values
 				('User1', 'user1@mail.ru', 'd36f9d30acb4e2857a2818aa8420f7b7', '111'),
 				('Admin', 'admin@mail.ru', 'd36f9d30acb4e2857a2818aa8420f7b7', '111');
-				insert into lists (title, description) values ('Купить в магазине', '');
-				insert into users_lists values ((select uuid from users where email = 'user1@mail.ru'), 1);
+				insert into lists (user_uuid, title, description) values ((select uuid from users where email = 'user1@mail.ru'), 'Купить в магазине', '');
 				`)
 			},
 			check: func(t *testing.T, hints []storage.EmailSearchHint, err error) {
