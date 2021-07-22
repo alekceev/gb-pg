@@ -1,0 +1,24 @@
+todo=> \t
+Tuples only is off.
+todo=> \d+
+                            List of relations
+ Schema | Name  | Type  | Owner | Persistence |    Size    | Description 
+--------+-------+-------+-------+-------------+------------+-------------
+ public | users | table | www   | permanent   | 8192 bytes | 
+(1 row)
+
+todo=> \d+ users
+                                                   Table "public.users"
+ Column |            Type             | Collation | Nullable |      Default       | Storage  | Stats target | Description 
+--------+-----------------------------+-----------+----------+--------------------+----------+--------------+-------------
+ uuid   | uuid                        |           | not null | uuid_generate_v4() | plain    |              | 
+ ctime  | timestamp without time zone |           | not null | CURRENT_TIMESTAMP  | plain    |              | 
+ name   | character varying(127)      |           |          |                    | extended |              | 
+ email  | character varying(127)      |           |          |                    | extended |              | 
+ pass   | character varying(32)       |           |          |                    | extended |              | 
+ salt   | character varying(10)       |           |          |                    | extended |              | 
+Indexes:
+    "users_pkey" PRIMARY KEY, btree (uuid)
+    "users_email_key" UNIQUE CONSTRAINT, btree (email)
+Access method: heap
+

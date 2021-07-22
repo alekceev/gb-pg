@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+
+  db:
+    image: postgres
+    restart: always
+    environment:
+      #POSTGRES_USER: www
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: todo
+    ports:
+      - "127.0.0.1:15434:5432"
+    volumes:
+      - .:/todo
+      - ./.database/postgres/data:/var/lib/postgresql/data
+    working_dir: /todo
+
