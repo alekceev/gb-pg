@@ -10,19 +10,12 @@ create table if not exists users (
     salt      varchar(10)
 );
 
--- список туду листов
+-- список туду листов юзера
 create table if not exists lists (
     id          serial not null unique,
+    user_uuid   uuid references users (uuid) on delete cascade not null,
     title       varchar(255) not null,
     description varchar(255)
-);
-
--- связь листов с юзерами: many_to_many
-create table if not exists users_lists
-(
-    user_uuid uuid references users (uuid) on delete cascade not null,
-    list_id   int references lists (id) on delete cascade not null,
-    UNIQUE (user_uuid, list_id)
 );
 
 -- список задач

@@ -3,13 +3,9 @@ insert into users (name, email, pass, salt) values
   ('User2', 'user2@mail.ru', 'd36f9d30acb4e2857a2818aa8420f7b7', '111'),
   ('Admin', 'admin@mail.ru', '66e1a360ee8070ba822aca90526dec47', '222');
 
-insert into lists (title, description) values
-  ('Купить в магазине', ''),
-  ('Список задач', 'Что нужно сделать в ближайшее время');
-
-insert into users_lists values
-  ((select uuid from users where email = 'user1@mail.ru'), 1),
-  ((select uuid from users where email = 'user1@mail.ru'), 2);
+insert into lists (user_uuid, title, description) values
+  ((select uuid from users where email = 'user1@mail.ru'), 'Купить в магазине', ''),
+  ((select uuid from users where email = 'user1@mail.ru'), 'Список задач', 'Что нужно сделать в ближайшее время');
 
 insert into items (list_id, title, description, due_date) values
   (1, 'Молоко', '', now() + interval '1 day'),
