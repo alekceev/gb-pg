@@ -97,8 +97,8 @@ select
 	u.email,
 	u.name,
 	count(ul.list_id) as cnt
-from users_lists ul
-join users u on ul.user_uuid = u.uuid
+from lists l
+join users u on l.user_uuid = u.uuid
 where u.email like $1
 group by u.email, u.name
 order by cnt desc
